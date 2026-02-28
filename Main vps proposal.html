@@ -666,7 +666,13 @@
     .acc-cell:nth-child(even) { border-right: 1px solid var(--border-hi); }
     .progress-bar { padding: 14px 24px; }
   }
-* { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+@media print {
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  .corner, .sidebar, .progress-bar, .section-nav { display: none !important; }
+  .section { display: block !important; animation: none !important; opacity: 1 !important; transform: none !important; page-break-inside: avoid; break-inside: avoid; }
+  .layout { display: block !important; }
+  body { overflow: visible !important; }
+}
 </style>
 </head>
 <body>
@@ -1697,22 +1703,9 @@ if(__exports != exports)module.exports = exports;return module.exports}));
   // NEW generatePDF — html2canvas screenshot approach
   // ─────────────────────────────────────────────────────────────
   async function generatePDF() {
-    var clientName  = (document.getElementById('clientName')  || {}).value || '';
-    var clientEmail = (document.getElementById('clientEmail') || {}).value || '';
-    var clientDate  = (document.getElementById('clientDate')  || {}).value || '';
-
-    // Format date for display in PDF
-    var dateObj    = clientDate ? new Date(clientDate + 'T12:00:00') : new Date();
-    var months     = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-    var formattedDate = months[dateObj.getMonth()] + ' ' + dateObj.getDate() + ', ' + dateObj.getFullYear();
-
+    var clientName = (document.getElementById('clientName') || {}).value || '';
+    var clientDate = (document.getElementById('clientDate') || {}).value || '';
     var st = document.getElementById('sigStatus');
-
-    // Guard: library loaded
-    if (typeof html2pdf === 'undefined') {
-      if (st) { st.textContent = '⚠ PDF library not loaded. Please refresh the page.'; st.style.color = 'rgba(230,170,80,0.95)'; st.style.display = 'block'; }
-      return;
-    }
 
     // Guard: client name required
     if (!clientName.trim()) {
@@ -1728,91 +1721,59 @@ if(__exports != exports)module.exports = exports;return module.exports}));
       return;
     }
 
-    if (st) { st.textContent = 'Generating PDF… please wait.'; st.style.color = 'rgba(200,198,194,0.7)'; st.style.display = 'block'; }
+    // Format date
+    var dateObj = clientDate ? new Date(clientDate + 'T12:00:00') : new Date();
+    var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    var formattedDate = months[dateObj.getMonth()] + ' ' + dateObj.getDate() + ', ' + dateObj.getFullYear();
+    var safeName = clientName.replace(/[^a-zA-Z0-9\s\-]/g, '').replace(/\s+/g, '-').trim() || 'Client';
 
-    // Capture signature data URL BEFORE cloning (live canvas is accessible; clone canvas may be tainted)
+    if (st) { st.textContent = 'Opening print dialog…'; st.style.color = 'rgba(200,198,194,0.7)'; st.style.display = 'block'; }
+
+    // Replace signature canvas with <img> so it prints
     var sigDataURL = signaturePad.toDataURL('image/png');
-    var safeName   = clientName.replace(/[^a-zA-Z0-9\s\-]/g, '').replace(/\s+/g, '-').trim() || 'Client';
-
-    // Wait for Google Fonts to finish loading (IBM Plex Mono, Bebas Neue)
-    // Without this, html2canvas may capture system fallback fonts instead
-    await document.fonts.ready;
-
-    var opt = {
-      margin:  0,
-      filename: 'VPS-Proposal-Signed-' + safeName + '.pdf',
-      image:   { type: 'jpeg', quality: 0.95 },
-      html2canvas: {
-        scale:           2,
-        backgroundColor: '#080808',
-        logging:         false,
-        windowWidth:     816,
-        scrollX:         0,
-        scrollY:         0,
-        imageTimeout:    0,
-        onclone: function(clonedDoc) {
-          // 1. Make ALL sections visible — disable animation so html2canvas
-          //    doesn't capture them at opacity:0 (the fadeUp start state)
-          clonedDoc.querySelectorAll('.section').forEach(function(s) {
-            s.style.display = 'block';
-            s.style.animation = 'none';
-            s.style.opacity = '1';
-            s.style.transform = 'none';
-          });
-
-          // 2. Hide UI-only elements that don't belong in a document
-          ['.sidebar', '.progress-bar', '.section-nav', '.corner'].forEach(function(sel) {
-            clonedDoc.querySelectorAll(sel).forEach(function(el) {
-              el.style.display = 'none';
-            });
-          });
-
-          // 3. Collapse the sidebar column so content fills full width
-          var layout = clonedDoc.querySelector('.layout');
-          if (layout) { layout.style.gridTemplateColumns = '1fr'; }
-
-          // 4. Replace signature canvas with <img> to avoid tainted-canvas blank rendering
-          var sigEl = clonedDoc.getElementById('sigCanvas');
-          if (sigEl && sigDataURL) {
-            var img = clonedDoc.createElement('img');
-            img.src = sigDataURL;
-            img.style.display    = 'block';
-            img.style.width      = '100%';
-            img.style.height     = '140px';
-            img.style.objectFit  = 'contain';
-            sigEl.parentNode.replaceChild(img, sigEl);
-          }
-
-          // 5. Bake input field values into visible <div> elements
-          // (html2canvas renders input.value inconsistently -- use text nodes instead)
-          [
-            { id: 'clientName', value: clientName },
-            { id: 'clientDate', value: formattedDate }
-          ].forEach(function(field) {
-            var input = clonedDoc.getElementById(field.id);
-            if (input) {
-              var div = clonedDoc.createElement('div');
-              div.className  = input.className;
-              div.style.cssText = input.style.cssText || '';
-              div.style.color   = '#F0EDE8';
-              div.style.display = 'block';
-              div.textContent   = field.value;
-              input.parentNode.insertBefore(div, input.nextSibling);
-              input.style.display = 'none';
-            }
-          });
-        }
-      },
-      jsPDF: { unit: 'pt', format: 'letter', orientation: 'portrait', compress: true }
-    };
-
-    try {
-      await html2pdf().set(opt).from(document.body).save();
-      if (st) { st.textContent = '✓ PDF downloaded successfully.'; st.style.color = 'rgba(180,220,160,0.9)'; }
-    } catch(err) {
-      if (st) { st.textContent = '⚠ PDF error: ' + (err.message || err); st.style.color = 'rgba(230,170,80,0.9)'; st.style.display = 'block'; }
-      console.error('generatePDF error:', err);
+    var sigCanvas = document.getElementById('sigCanvas');
+    var sigImg = null;
+    if (sigCanvas && sigDataURL) {
+      sigImg = document.createElement('img');
+      sigImg.src = sigDataURL;
+      sigImg.style.cssText = 'display:block;width:100%;height:140px;object-fit:contain;';
+      sigCanvas.style.display = 'none';
+      sigCanvas.parentNode.insertBefore(sigImg, sigCanvas.nextSibling);
     }
+
+    // Bake name and date into visible divs (inputs don't print reliably)
+    var bakedPairs = [];
+    [{id:'clientName', value:clientName}, {id:'clientDate', value:formattedDate}].forEach(function(f) {
+      var input = document.getElementById(f.id);
+      if (input) {
+        var div = document.createElement('div');
+        div.className = input.className;
+        div.style.color = '#F0EDE8';
+        div.style.display = 'block';
+        div.textContent = f.value;
+        input.parentNode.insertBefore(div, input.nextSibling);
+        input.style.display = 'none';
+        bakedPairs.push({div: div, input: input});
+      }
+    });
+
+    // Set title so Chrome suggests it as the PDF filename
+    var origTitle = document.title;
+    document.title = 'VPS-Proposal-Signed-' + safeName;
+
+    await document.fonts.ready;
+    window.print();
+
+    // Restore DOM after print dialog closes
+    document.title = origTitle;
+    if (sigImg && sigImg.parentNode) sigImg.parentNode.removeChild(sigImg);
+    if (sigCanvas) sigCanvas.style.display = '';
+    bakedPairs.forEach(function(p) {
+      p.input.style.display = '';
+      if (p.div.parentNode) p.div.parentNode.removeChild(p.div);
+    });
+
+    if (st) { st.textContent = '✓ PDF saved.'; st.style.color = 'rgba(180,220,160,0.9)'; }
   }
 
   // ── EVENT DELEGATION ──
