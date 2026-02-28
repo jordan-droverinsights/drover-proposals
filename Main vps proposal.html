@@ -1751,12 +1751,23 @@ if(__exports != exports)module.exports = exports;return module.exports}));
         scrollY:         0,
         imageTimeout:    0,
         onclone: function(clonedDoc) {
-          // Make ALL sections visible in the clone -- does not affect live page navigation state
+          // 1. Make ALL sections visible
           clonedDoc.querySelectorAll('.section').forEach(function(s) {
             s.style.display = 'block';
           });
 
-          // Replace signature canvas with <img> to avoid tainted-canvas blank rendering
+          // 2. Hide UI-only elements that don't belong in a document
+          ['.sidebar', '.progress-bar', '.section-nav', '.corner'].forEach(function(sel) {
+            clonedDoc.querySelectorAll(sel).forEach(function(el) {
+              el.style.display = 'none';
+            });
+          });
+
+          // 3. Collapse the sidebar column so content fills full width
+          var layout = clonedDoc.querySelector('.layout');
+          if (layout) { layout.style.gridTemplateColumns = '1fr'; }
+
+          // 4. Replace signature canvas with <img> to avoid tainted-canvas blank rendering
           var sigEl = clonedDoc.getElementById('sigCanvas');
           if (sigEl && sigDataURL) {
             var img = clonedDoc.createElement('img');
@@ -1768,8 +1779,8 @@ if(__exports != exports)module.exports = exports;return module.exports}));
             sigEl.parentNode.replaceChild(img, sigEl);
           }
 
-          // Bake input field values into visible <div> elements
-          // (html2canvas renders input.value inconsistently across browsers -- use text nodes instead)
+          // 5. Bake input field values into visible <div> elements
+          // (html2canvas renders input.value inconsistently -- use text nodes instead)
           [
             { id: 'clientName', value: clientName },
             { id: 'clientDate', value: formattedDate }
