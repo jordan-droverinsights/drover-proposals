@@ -1746,9 +1746,10 @@ if(__exports != exports)module.exports = exports;return module.exports}));
       }
 
       // Page 1 — info table (right-side values, letter page = 612 × 792 pt)
-      stamp(page1, clientName,        323, 441); // CLIENT CONTACT
-      stamp(page1, clientEmail,       323, 413); // CLIENT EMAIL
-      stamp(page1, formattedDateUpper, 323, 301); // DATE
+      // Row order top→bottom: CLIENT CONTACT, CLIENT EMAIL, PREPARED BY, PHONE, EMAIL, DATE (~28pt spacing)
+      stamp(page1, clientName,         310, 525, 270); // CLIENT CONTACT
+      stamp(page1, clientEmail,        310, 497, 270); // CLIENT EMAIL
+      stamp(page1, formattedDateUpper, 310, 385, 270); // DATE
 
       // Page 2 — signature image
       var sigDataURL = signaturePad.toDataURL('image/png');
