@@ -26,7 +26,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. The drawn signature appears in the PDF at the correct location with the client name and signed date beneath it
   4. The PDF filename includes the client name (e.g. `VPS-Proposal-Signed-[ClientName].pdf`) and downloads automatically without a save dialog requiring extra steps
   5. The Submit button shows a generating state while the PDF builds and re-enables when the download completes; the browser makes no fetch request to localhost or any server during generation
-**Plans**: TBD
+**Plans**: 1 plan
+
+Plans:
+- [ ] 01-01-PLAN.md — Inline html2pdf bundle and replace generatePDF() with DOM-capture approach
 
 ## Progress
 
@@ -35,4 +38,4 @@ Phases execute in numeric order: 1
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. PDF Generation Fix | 0/? | Not started | - |
+| 1. PDF Generation Fix | 0/1 | Not started | - |
