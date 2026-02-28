@@ -1751,9 +1751,13 @@ if(__exports != exports)module.exports = exports;return module.exports}));
         scrollY:         0,
         imageTimeout:    0,
         onclone: function(clonedDoc) {
-          // 1. Make ALL sections visible
+          // 1. Make ALL sections visible — disable animation so html2canvas
+          //    doesn't capture them at opacity:0 (the fadeUp start state)
           clonedDoc.querySelectorAll('.section').forEach(function(s) {
             s.style.display = 'block';
+            s.style.animation = 'none';
+            s.style.opacity = '1';
+            s.style.transform = 'none';
           });
 
           // 2. Hide UI-only elements that don't belong in a document
