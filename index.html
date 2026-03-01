@@ -13,8 +13,8 @@
     --border:    rgba(255,255,255,0.07);
     --border-hi: rgba(255,255,255,0.18);
     --white:     #F0EDE8;
-    --dim:       rgba(240,237,232,0.35);
-    --dimmer:    rgba(240,237,232,0.15);
+    --dim:       rgba(240,237,232,0.55);
+    --dimmer:    rgba(240,237,232,0.32);
     --ghost:     #1A1A1A;
     --mid-gray:  #6B6B6B;
     --warn-text: rgba(230,170,80,0.9);
@@ -1752,7 +1752,7 @@ if(__exports != exports)module.exports = exports;return module.exports}));
       // Row order top→bottom: CLIENT CONTACT, CLIENT EMAIL, PREPARED BY, PHONE, EMAIL, DATE (28pt spacing)
       stamp(page1, clientName,         310, 497, 270); // CLIENT CONTACT
       stamp(page1, clientEmail,        310, 469, 270); // CLIENT EMAIL
-      stamp(page1, formattedDateUpper, 310, 357, 270); // DATE
+      stamp(page1, formattedDateUpper, 310, 385, 270); // DATE
 
       // Page 2 — investment summary (reflects selected services)
       var onetime = 0, monthly = 0;
@@ -1768,10 +1768,10 @@ if(__exports != exports)module.exports = exports;return module.exports}));
       var fmtMoney = function(n) { return '$' + n.toLocaleString(); };
       var fmtMonthly = function(n) { return '$' + n.toLocaleString() + '/MO'; };
 
-      stamp(page2, fmtMoney(onetime),   490, 490, 110); // ONE-TIME SUBTOTAL
-      stamp(page2, fmtMoney(deposit),   490, 370, 110); // DEPOSIT DUE NOW (50%)
-      stamp(page2, fmtMoney(balance),   490, 343, 110); // BALANCE DUE AT DELIVERY (50%)
-      stamp(page2, fmtMonthly(monthly), 490, 316, 110); // MONTHLY RETAINER
+      stamp(page2, fmtMoney(onetime),   490, 462, 110); // ONE-TIME SUBTOTAL
+      stamp(page2, fmtMoney(deposit),   490, 342, 110); // DEPOSIT DUE NOW (50%)
+      stamp(page2, fmtMoney(balance),   490, 315, 110); // BALANCE DUE AT DELIVERY (50%)
+      stamp(page2, fmtMonthly(monthly), 490, 288, 110); // MONTHLY RETAINER
 
       // Page 2 — signature image
       var sigDataURL = signaturePad.toDataURL('image/png');
