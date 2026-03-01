@@ -1762,26 +1762,47 @@ if(__exports != exports)module.exports = exports;return module.exports}));
       stamp(page1, clientEmail,        310, 441, 270); // CLIENT EMAIL  (was 469 — fixed: moved down 1 row)
       stamp(page1, formattedDateUpper, 310, 357, 270); // DATE          (was 385 — fixed: moved down 1 row)
 
-      // Page 2 — investment summary (reflects selected services)
+      // Page 2 — collect selected services
       var onetime = 0, monthly = 0;
-      document.querySelectorAll('.acc-check').forEach(function(el) {
-        if (el.classList.contains('checked')) {
-          var p = parseInt(el.dataset.price, 10) || 0;
-          if (el.dataset.type === 'onetime') onetime += p;
-          if (el.dataset.type === 'monthly') monthly += p;
-        }
-      });
+      var onetimeEls = Array.from(document.querySelectorAll('.acc-check[data-type="onetime"]'));
+      var monthlyEls = Array.from(document.querySelectorAll('.acc-check[data-type="monthly"]'));
+      onetimeEls.forEach(function(el) { if (el.classList.contains('checked')) onetime += parseInt(el.dataset.price, 10) || 0; });
+      monthlyEls.forEach(function(el) { if (el.classList.contains('checked')) monthly += parseInt(el.dataset.price, 10) || 0; });
       var deposit  = onetime / 2;
       var balance  = onetime / 2;
       var fmtMoney = function(n) { return '$' + n.toLocaleString(); };
       var fmtMonthly = function(n) { return '$' + n.toLocaleString() + '/MO'; };
 
-      // Page 2 totals — right-aligned to match template value column (rightEdge ≈ 540pt)
+      // Page 2 — checkboxes for each service row
+      // Draws a small box (filled+tick if checked, outline-only if not) on the left of each row
+      function drawCheckbox(page, isChecked, cbX, cbY) {
+        var sz = 7;
+        page.drawRectangle({ x: cbX, y: cbY, width: sz, height: sz,
+          borderColor: isChecked ? fg : PDFLib.rgb(0.3, 0.3, 0.3), borderWidth: 0.6,
+          color: bg });
+        if (isChecked) {
+          page.drawLine({ start: {x: cbX+1.5, y: cbY+3.5}, end: {x: cbX+3,   y: cbY+1.5}, thickness: 0.8, color: fg });
+          page.drawLine({ start: {x: cbX+3,   y: cbY+1.5}, end: {x: cbX+6.5, y: cbY+6  }, thickness: 0.8, color: fg });
+        }
+      }
+
+      // Estimated service row y positions (top→bottom = decreasing y in PDF coords)
+      // One-time: Website, Logo, Brochure+Cards, GBP Setup
+      var CB_X = 42;
+      [565, 545, 525, 505].forEach(function(y, i) {
+        if (onetimeEls[i]) drawCheckbox(page2, onetimeEls[i].classList.contains('checked'), CB_X, y);
+      });
+      // Monthly: Sales Outreach OS, LinkedIn Management, Light SEO Optimization
+      [445, 425, 405].forEach(function(y, i) {
+        if (monthlyEls[i]) drawCheckbox(page2, monthlyEls[i].classList.contains('checked'), CB_X, y);
+      });
+
+      // Page 2 totals — right-aligned to match template value column
       var P2_RIGHT = 540;
-      stampRight(page2, fmtMoney(onetime),   468, P2_RIGHT); // ONE-TIME SUBTOTAL   (raised +6)
+      stampRight(page2, fmtMoney(onetime),   488, P2_RIGHT); // ONE-TIME SUBTOTAL   (was 468 — raised to clear monthly header)
       stampRight(page2, fmtMoney(deposit),   342, P2_RIGHT); // DEPOSIT DUE NOW (50%)
       stampRight(page2, fmtMoney(balance),   315, P2_RIGHT); // BALANCE DUE AT DELIVERY (50%)
-      stampRight(page2, fmtMonthly(monthly), 298, P2_RIGHT); // MONTHLY RETAINER    (raised +10)
+      stampRight(page2, fmtMonthly(monthly), 298, P2_RIGHT); // MONTHLY RETAINER
 
       // Page 2 — signature image
       var sigDataURL = signaturePad.toDataURL('image/png');
