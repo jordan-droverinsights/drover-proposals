@@ -1773,35 +1773,25 @@ if(__exports != exports)module.exports = exports;return module.exports}));
       var fmtMoney = function(n) { return '$' + n.toLocaleString(); };
       var fmtMonthly = function(n) { return '$' + n.toLocaleString() + '/MO'; };
 
-      // Page 2 — checkboxes for each service row
-      // Draws a small box (filled+tick if checked, outline-only if not) on the left of each row
+      // Page 2 — checkboxes: text-based [X] / [ ] at left of each service row
       function drawCheckbox(page, isChecked, cbX, cbY) {
-        var sz = 8;
-        // White border for both states; fill bg for unchecked, fg for checked
-        page.drawRectangle({ x: cbX, y: cbY, width: sz, height: sz,
-          borderColor: fg, borderWidth: 1.0,
-          color: isChecked ? fg : bg });
-        if (isChecked) {
-          // Tick mark in dark color over filled box
-          page.drawLine({ start: {x: cbX+1.5, y: cbY+4  }, end: {x: cbX+3,   y: cbY+2  }, thickness: 1.0, color: bg });
-          page.drawLine({ start: {x: cbX+3,   y: cbY+2  }, end: {x: cbX+7,   y: cbY+6.5}, thickness: 1.0, color: bg });
-        }
+        page.drawText(isChecked ? '[X]' : '[ ]', { x: cbX, y: cbY, size: 8, font: font, color: fg });
       }
 
-      // Service row y positions — calibrated from screenshot (MONTHLY SERVICES header ≈ y=488)
-      // One-time rows: Website, Logo, Brochure+Cards, GBP Setup (each ~20pt apart going up)
-      var CB_X = 40;
-      [588, 568, 548, 528].forEach(function(y, i) {
+      // y positions derived from confirmed anchor: MONTHLY SERVICES header ≈ y=508
+      // One-time rows go UP (increasing y) from there, ~25pt per row
+      var CB_X = 48;
+      [608, 583, 558, 533].forEach(function(y, i) {  // Website, Logo, Brochure, GBP
         if (onetimeEls[i]) drawCheckbox(page2, onetimeEls[i].classList.contains('checked'), CB_X, y);
       });
-      // Monthly rows: Sales Outreach OS, LinkedIn Management, Light SEO Optimization
-      [468, 448, 428].forEach(function(y, i) {
+      // Monthly rows go DOWN (decreasing y) from monthly header ≈508, ~25pt per row
+      [483, 458, 433].forEach(function(y, i) {        // Sales Outreach, LinkedIn, Light SEO
         if (monthlyEls[i]) drawCheckbox(page2, monthlyEls[i].classList.contains('checked'), CB_X, y);
       });
 
       // Page 2 totals — right-aligned to match template value column
       var P2_RIGHT = 540;
-      stampRight(page2, fmtMoney(onetime),   508, P2_RIGHT); // ONE-TIME SUBTOTAL  (monthly header ≈488, subtotal one row above)
+      stampRight(page2, fmtMoney(onetime),   528, P2_RIGHT); // ONE-TIME SUBTOTAL  (raised above monthly header at y≈508)
       stampRight(page2, fmtMoney(deposit),   342, P2_RIGHT); // DEPOSIT DUE NOW (50%)
       stampRight(page2, fmtMoney(balance),   315, P2_RIGHT); // BALANCE DUE AT DELIVERY (50%)
       stampRight(page2, fmtMonthly(monthly), 298, P2_RIGHT); // MONTHLY RETAINER
