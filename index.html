@@ -749,6 +749,9 @@
 
     <div class="nav-group-label">Close</div>
     <div class="nav-link" data-section="s10"><span class="nav-num">/10</span> Next Steps</div>
+
+    <div class="nav-group-label">Download</div>
+    <div class="nav-link" id="downloadBlankBtn" style="cursor:pointer;"><span class="nav-num">↓</span> Blank PDF</div>
   </nav>
 
   <!-- MAIN -->
@@ -1746,10 +1749,29 @@ if(__exports != exports)module.exports = exports;return module.exports}));
       }
 
       // Page 1 — info table (right-side values, letter page = 612 × 792 pt)
-      // Row order top→bottom: CLIENT CONTACT, CLIENT EMAIL, PREPARED BY, PHONE, EMAIL, DATE (~28pt spacing)
-      stamp(page1, clientName,         310, 525, 270); // CLIENT CONTACT
-      stamp(page1, clientEmail,        310, 497, 270); // CLIENT EMAIL
-      stamp(page1, formattedDateUpper, 310, 385, 270); // DATE
+      // Row order top→bottom: CLIENT CONTACT, CLIENT EMAIL, PREPARED BY, PHONE, EMAIL, DATE (28pt spacing)
+      stamp(page1, clientName,         310, 497, 270); // CLIENT CONTACT
+      stamp(page1, clientEmail,        310, 469, 270); // CLIENT EMAIL
+      stamp(page1, formattedDateUpper, 310, 357, 270); // DATE
+
+      // Page 2 — investment summary (reflects selected services)
+      var onetime = 0, monthly = 0;
+      document.querySelectorAll('.acc-check').forEach(function(el) {
+        if (el.classList.contains('checked')) {
+          var p = parseInt(el.dataset.price, 10) || 0;
+          if (el.dataset.type === 'onetime') onetime += p;
+          if (el.dataset.type === 'monthly') monthly += p;
+        }
+      });
+      var deposit  = onetime / 2;
+      var balance  = onetime / 2;
+      var fmtMoney = function(n) { return '$' + n.toLocaleString(); };
+      var fmtMonthly = function(n) { return '$' + n.toLocaleString() + '/MO'; };
+
+      stamp(page2, fmtMoney(onetime),   490, 490, 110); // ONE-TIME SUBTOTAL
+      stamp(page2, fmtMoney(deposit),   490, 370, 110); // DEPOSIT DUE NOW (50%)
+      stamp(page2, fmtMoney(balance),   490, 343, 110); // BALANCE DUE AT DELIVERY (50%)
+      stamp(page2, fmtMonthly(monthly), 490, 316, 110); // MONTHLY RETAINER
 
       // Page 2 — signature image
       var sigDataURL = signaturePad.toDataURL('image/png');
@@ -1777,10 +1799,34 @@ if(__exports != exports)module.exports = exports;return module.exports}));
     }
   }
 
+  // ── BLANK PDF DOWNLOAD ──
+  async function downloadBlankPDF() {
+    var btn = document.getElementById('downloadBlankBtn');
+    if (btn) btn.style.opacity = '0.5';
+    try {
+      var resp = await fetch('./proposal-template.pdf');
+      if (!resp.ok) throw new Error('Template not found (' + resp.status + ')');
+      var bytes = await resp.arrayBuffer();
+      var blob = new Blob([bytes], { type: 'application/pdf' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = 'VPS-Proposal-Template.pdf';
+      document.body.appendChild(a); a.click();
+      setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+    } catch(err) {
+      console.error('Blank PDF download failed:', err);
+    }
+    if (btn) btn.style.opacity = '';
+  }
+
   // ── EVENT DELEGATION ──
   document.addEventListener('click', function(e) {
     var el = e.target;
     while (el && el !== document.body) {
+      if (el.id === 'downloadBlankBtn') {
+        downloadBlankPDF();
+        return;
+      }
       if (el.dataset && el.dataset.goto) {
         goTo(el.dataset.goto);
         return;
